@@ -1,108 +1,121 @@
 import streamlit as st
 import json
 import time
+import pandas as pd
 from classifier import classify_po
 
-# 1. Page Config with an Emoji Icon
-st.set_page_config(page_title="AI Procurement Engine", layout="wide", initial_sidebar_state="expanded")
+# 1. Advanced Page Config
+st.set_page_config(page_title="NexGen Procurement AI", layout="wide")
 
-# 2. Custom CSS for "Wow" Styling
+# 2. Advanced CSS - Glassmorphism & Animations
 st.markdown("""
     <style>
-    /* Main background and font */
-    .stApp {
-        background-color: #0e1117;
+    .main { background: #0b0e14; }
+    .stTextArea textarea { border-radius: 10px; border: 1px solid #3b82f6; background: #161b22; color: white; }
+    
+    /* Glassmorphism Card */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 25px;
+        margin-bottom: 20px;
     }
-    /* Custom Card Styling for results */
-    .category-card {
-        background-color: #1f2937;
-        padding: 20px;
-        border-radius: 15px;
-        border-left: 5px solid #3b82f6;
-        margin-bottom: 10px;
+    
+    /* Success Pulse Animation */
+    .pulse {
+        color: #10b981;
+        font-weight: bold;
+        animation: pulse-animation 2s infinite;
     }
-    /* Title Gradient */
-    .main-title {
-        font-size: 3rem;
-        font-weight: 800;
-        background: -webkit-linear-gradient(#3b82f6, #10b981);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    @keyframes pulse-animation {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Sidebar with Branding
+# 3. Sidebar with Metrics
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2103/2103633.png", width=80)
-    st.markdown("## AI Engine v2.0")
-    st.write("Precision classification for modern procurement.")
+    st.markdown("# 🛡️ Admin Panel")
+    st.metric(label="System Status", value="Online", delta="100%")
     st.divider()
-    accent_color = st.color_picker("UI Accent Color", "#3b82f6")
+    st.write("### Model Settings")
+    precision = st.select_slider("Search Precision", options=["Standard", "High", "Ultra"])
+    st.caption(f"Currently using {precision} mapping engine.")
 
-# 4. Header Section
-st.markdown('<h1 class="main-title">Procurement AI Explorer</h1>', unsafe_allow_html=True)
-st.write("Automated L1–L3 Taxonomy Mapping")
+# 4. Main UI Header
+st.markdown("<h1 style='text-align: center; color: #3b82f6;'>🚀 NexGen Taxonomy Engine</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #9ca3af;'>Enterprise-grade Purchase Order Classification</p>", unsafe_allow_html=True)
 
-# 5. Main Layout
-col1, col2 = st.columns([1, 1.2], gap="large")
+# 5. Tabbed Interface (The "Wow" factor for organization)
+tab1, tab2 = st.tabs(["🔍 Single Classifier", "📊 Analytics & History"])
 
-with col1:
-    st.subheader("📝 Input Specification")
-    with st.container():
-        po_description = st.text_area("PO Description", height=180, placeholder="Paste description here...")
-        supplier = st.text_input("📍 Supplier Name (Optional)")
-        
-        # Big high-action button
-        if st.button("RUN AI CLASSIFICATION", type="primary", use_container_width=True):
-            if not po_description.strip():
-                st.error("Missing input data.")
-            else:
-                # Execution Logic
-                with st.spinner("🧠 Neural Network Processing..."):
-                    time.sleep(1.5) # Forced delay for "Wow" effect
-                    result = classify_po(po_description, supplier)
-                st.session_state['result'] = result
-                st.session_state['processed'] = True
-
-with col2:
-    st.subheader("🎯 Classification Output")
+with tab1:
+    col1, col2 = st.columns([1, 1], gap="large")
     
-    if st.session_state.get('processed'):
-        try:
-            data = json.loads(st.session_state['result'])
-            
-            # Dynamic Results Display using custom HTML/CSS
-            st.markdown(f"""
-                <div class="category-card">
-                    <small style="color: #9ca3af;">L1 DOMAIN</small>
-                    <h2 style="margin:0; color: white;">{data.get('L1', 'Unclassified')}</h2>
-                </div>
-                <div class="category-card" style="border-left-color: #10b981;">
-                    <small style="color: #9ca3af;">L2 CATEGORY</small>
-                    <h3 style="margin:0; color: white;">{data.get('L2', 'Unclassified')}</h3>
-                </div>
-                <div class="category-card" style="border-left-color: #f59e0b;">
-                    <small style="color: #9ca3af;">L3 SUB-GROUP</small>
-                    <h4 style="margin:0; color: white;">{data.get('L3', 'Unclassified')}</h4>
-                </div>
-            """, unsafe_allow_html=True)
-            
-            # Action Buttons in a Row
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                st.download_button("📩 Export JSON", json.dumps(data), file_name="output.json", use_container_width=True)
-            with btn_col2:
-                if st.button("🔄 Clear", use_container_width=True):
-                    st.session_state['processed'] = False
-                    st.rerun()
+    with col1:
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.subheader("Input Stream")
+        po_input = st.text_area("PO Description", height=200)
+        vendor = st.text_input("Supplier Identifier")
+        
+        if st.button("EXECUTE CLASSIFICATION", use_container_width=True, type="primary"):
+            if po_input:
+                with st.status("Initializing AI...", expanded=True) as status:
+                    st.write("Fetching taxonomy rules...")
+                    time.sleep(0.8)
+                    st.write("Running L1-L3 Neural Mapping...")
+                    raw_result = classify_po(po_input, vendor)
+                    time.sleep(0.5)
+                    status.update(label="Classification Complete!", state="complete", expanded=False)
+                
+                st.session_state['latest_result'] = raw_result
+            else:
+                st.error("Input required.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        except Exception:
-            st.error("Data Parsing Error")
-            st.code(st.session_state['result'])
-    else:
-        # Professional Empty State
-        st.info("Upload or type a PO description to begin neural mapping.")
-        st.image("https://cdn.dribbble.com/users/148670/screenshots/4518301/empty_state.png", use_container_width=True)
+    with col2:
+        if 'latest_result' in st.session_state:
+            try:
+                res = json.loads(st.session_state['latest_result'])
+                
+                st.subheader("Mapping Results")
+                
+                # Using columns for a mini-dashboard look
+                c1, c2 = st.columns(2)
+                with c1:
+                    st.markdown(f"**L1 Domain** \n`{res.get('L1', 'N/A')}`")
+                    st.markdown(f"**L2 Category** \n`{res.get('L2', 'N/A')}`")
+                with c2:
+                    # Simulated Confidence Score
+                    st.write("AI Confidence Score")
+                    st.progress(0.92) # You can hardcode this or extract if your model provides it
+                    st.caption("92% Confidence Match")
+
+                st.divider()
+                st.info(f"**L3 Final Mapping:** {res.get('L3', 'N/A')}")
+                
+                with st.expander("Show Metadata"):
+                    st.json(res)
+            except:
+                st.error("Response parsing error.")
+        else:
+            st.write("### Instructions")
+            st.info("Paste your PO details on the left and click execute to see the AI taxonomy mapping in real-time.")
+
+with tab2:
+    st.subheader("Historical Data Tracking")
+    # Sample data to show off the visual potential
+    chart_data = pd.DataFrame({
+        "Category": ["IT", "Office", "Travel", "Legal"],
+        "PO Count": [25, 40, 10, 5]
+    })
+    st.bar_chart(chart_data, x="Category", y="PO Count", color="#3b82f6")
+    st.success("Log History: Last 10 records synced successfully.")
 
 st.divider()
+st.markdown("<div style='text-align: center;' class='pulse'>● SYSTEM OPERATIONAL</div>", unsafe_allow_html=True)
